@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pokédex</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f2f2f2;
+    margin: 0;
+    padding: 20px;
+    text-align: center;
+}
+
+header {
+    margin-bottom: 20px;
+}
+
+#buscador {
+    padding: 10px;
+    width: 250px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+}
+
+.pokedex {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background: white;
+    border-radius: 15px;
+    padding: 15px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
+    cursor: pointer;
+}
+
+.card:hover {
+    transform: scale(1.05);
+}
+
+.card img {
+    width: 120px;
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-contenido {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    width: 300px;
+    text-align: center;
+}
+
+.oculto {
+    display: none;
+}
+
+#cerrar-modal {
+    float: right;
+    font-size: 28px;
+    cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>Pokédex</h1>
+    <input type="text" id="buscador" placeholder="Buscar Pokémon">
+</header>
+
+<main id="pokedex-container" class="pokedex"></main>
+
+<div id="modal" class="modal oculto">
+    <div class="modal-contenido">
+
+        <span id="cerrar-modal">&times;</span>
+
+        <img id="modal-img" src="" alt="pokemon">
+
+        <h2 id="modal-nombre"></h2>
+
+        <p id="modal-id"></p>
+        <p id="modal-tipos"></p>
+        <p id="modal-altura"></p>
+        <p id="modal-peso"></p>
+
+    </div>
+</div>
+
+<script>
+const pokedex = document.getElementById('pokedex-container');
+const buscador = document.getElementById('buscador');
+
+const modal = document.getElementById('modal');
+const cerrarModal = document.getElementById('cerrar-modal');
+const modalImg = document.getElementById('modal-img');
+const modalNombre = document.getElementById('modal-nombre');
+const modalId = document.getElementById('modal-id');
+const modalTipos = document.getElementById('modal-tipos');
+const modalAltura = document.getElementById('modal-altura');
+const modalPeso = document.getElementById('modal-peso');
+
+function crearTarjetaAPI(pokemon) {
+
+    const tarjeta = document.createElement('div');
+
+    tarjeta.classList.add('card');
+
+    tarjeta.innerHTML = `
+        <img src="${pokemon.sprites.front_default}" alt="${pokemon.name}">
+        <h2>${pokemon.name}</h2>
+        <p>#${pokemon.id}</p>
+    `;
+
+    tarjeta.addEventListener('click', () => abrirModal(pokemon));
+
+    pokedex.appendChild(tarjeta);
+}
+
+function abrirModal(pokemon) {
+
+    modal.classList.remove('oculto');
+
+    modalImg.src = pokemon.sprites.front_default;
+    modalNombre.textContent = pokemon.name;
+    modalId.textContent = `ID: ${pokemon.id}`;
+
+    const tipos = pokemon.types.map(tipo => tipo.type.name);
+
+    modalTipos.textContent = `Tipo: ${tipos.join(', ')}`;
+
+    modalAltura.textContent = `Altura: ${pokemon.height}`;
+    modalPeso.textContent = `Peso: ${pokemon.weight}`;
+}
+
+cerrarModal.addEventListener('click', () => {
+    modal.classList.add('oculto');
+});
+
+buscador.addEventListener('keyup', () => {
+
+    const texto = buscador.value.toLowerCase();
+
+    const tarjetas = document.querySelectorAll('.card');
+
+    tarjetas.forEach(tarjeta => {
+
+        const nombre = tarjeta.textContent.toLowerCase();
+
+        if(nombre.includes(texto)) {
+            tarjeta.style.display = 'block';
+        } else {
+            tarjeta.style.display = 'none';
+        }
+    });
+});
+
+async function obtenerPokemon(id) {
+
+    const url = `https://pokeapi.co/api/v2/pokemon/${id}`;
+
+    const respuesta = await fetch(url);
+    const pokemon = await respuesta.json();
+
+    crearTarjetaAPI(pokemon);
+}
+
+async function descargarPokemon() {
+
+    for(let i = 1; i <= 151; i++) {
+        await obtenerPokemon(i);
+    }
+}
+
+// Iniciamos la descarga
+
+descargarPokemon();
+</script>
+
+</body>
+</html>
